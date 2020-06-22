@@ -1,0 +1,79 @@
+version: "2"
+services:
+
+  openresty:
+    hostname: openresty
+    build:
+      context:
+        ./containers/openresty
+      args:
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
+    image: openresty:last
+    container_name: openresty
+    dns:
+      - 8.8.8.8
+    working_dir: /php_task
+    volumes:
+      - ../:/php_task
+      - ./logs/openresty:/var/log/nginx
+      - ./containers/openresty/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./containers/openresty/conf/vhosts.d:/usr/local/openresty/nginx/conf/vhosts.d
+    ports:
+      - 80:80
+    links:
+      - php-fpm
+
+  php-fpm:
+    hostname: php-fpm
+    build:
+      context:
+        ./containers/php-fpm
+      args:
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
+    security_opt:
+      - seccomp:unconfined  #Нужно для работы strace
+      - apparmor:unconfined #Нужно для работы strace
+    cap_add:
+      - SYS_PTRACE          #Нужно для работы strace
+    image: php-fpm:last
+    container_name: php-fpm
+    working_dir: /php_task
+    dns:
+      - 8.8.8.8
+    volumes:
+      - ../:/php_task
+      - ./containers/php-fpm/conf/my.ini:/usr/local/etc/php/conf.d/my.ini
+      - ./containers/php-fpm/conf/www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./logs/php-fpm:/var/log/php-fpm
+      - ~/.ssh:/home/php_task/.ssh
+      - $SSH_AUTH_SOCK:/ssh-agent
+      - ./.bash_history:/home/php_task/.bash_history
+    links:
+      - mariadb
+    expose:
+      - 10000 #Нужно для XDebug
+    environment:
+      PHP_IDE_CONFIG: serverName=php_task.docker
+      XDEBUG_REMOTE_HOST: ${XDEBUG_REMOTE_HOST}
+      REMOTE_CONNECT_BACK: ${REMOTE_CONNECT_BACK}
+      SSH_AUTH_SOCK: /ssh-agent
+      PROMPT_COMMAND: history -a;history -r
+
+  mariadb:
+    hostname: mariadb
+    image: mariadb:10.3
+    container_name: mariadb
+    volumes:
+      - ./containers/mariadb/conf:/etc/mysql/conf.d
+      - mariadb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: php_task
+    ports:
+      - 3306:3306
+
+volumes:
+  mariadb:
+    driver: local
