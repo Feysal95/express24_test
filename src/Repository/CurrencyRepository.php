@@ -38,11 +38,4 @@ class CurrencyRepository extends ServiceEntityRepository
         $this->em->persist($currency);
         $this->em->flush();
     }
-
-    public function findPages( $page = 1, $limit = 10 ){
-        $qry = $this->createQueryBuilder('p');
-        $qry->setMaxResults($limit);
-        $qry->setFirstResult( ( $limit * $page ) - $limit );//10*2=20 - 10 = 0
-        return $qry->getQuery()->getResult();
-    }
 }

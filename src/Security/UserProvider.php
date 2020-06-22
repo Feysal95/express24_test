@@ -23,7 +23,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
      */
     public function loadUserByUsername($username)
     {
-        // Инициализируем объект юзера и в качестве username задаем токен из хенедра
+        // Инициализируем объект юзера и в качестве username задаем токен из хедера
         return (new User())->setUsername($username);
 
         // Load a User object from your data source or throw UsernameNotFoundException.
@@ -52,7 +52,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', get_class($user)));
         }
 
-        // Нам объект юзера нужен только что бы вклиниться в работу компонента, поэтому тут ничего рефрешить
+        // Нам объект юзера нужен только что бы вклиниться в работу компонента, поэтому тут нечего рефрешить
         return $user;
 
 //        // Return a User object after making sure its data is "fresh".
